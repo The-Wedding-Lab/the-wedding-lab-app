@@ -6,7 +6,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 
 export default function TabTestNotification() {
-  // 로컬 알림 (사용자님이 수정하신 5초로 반영)
+  // 로컬 알림
   async function scheduleLocalNotification() {
     await Notifications.scheduleNotificationAsync({
       content: {
