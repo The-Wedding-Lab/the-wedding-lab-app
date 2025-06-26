@@ -1,28 +1,23 @@
-import { SafeAreaView, StyleSheet } from "react-native";
+import { SafeAreaView, StyleSheet, View } from "react-native";
 
 import WebView from "react-native-webview";
 
 export default function TabTwoScreen() {
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-      }}
-    >
-      <WebView source={{ uri: "http://192.168.0.4:3003/onboarding" }} />
-    </SafeAreaView>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <WebView source={{ uri: "http://192.168.0.4:3003/onboarding" }} />
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: "#808080",
-    bottom: -90,
-    left: -35,
-    position: "absolute",
+  container: {
+    flex: 1,
+    backgroundColor: "white",
   },
-  titleContainer: {
-    flexDirection: "row",
-    gap: 8,
+  safeArea: {
+    flex: 1,
   },
 });
