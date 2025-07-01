@@ -3,114 +3,85 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
-import Constants from "expo-constants";
-import * as Device from "expo-device";
 import { useFonts } from "expo-font";
-import * as Notifications from "expo-notifications";
+import * as LocalAuthentication from "expo-local-authentication";
 import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
-import { Platform } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { View } from "react-native";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
-
-async function registerForPushNotificationsAsync() {
-  let token;
-
-  if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync("default", {
-      name: "default",
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: "#FF231F7C",
-    });
-  }
-
-  if (Device.isDevice) {
-    const { status: existingStatus } =
-      await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-    if (existingStatus !== "granted") {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-    if (finalStatus !== "granted") {
-      console.error("Failed to get push token for push notification!");
-      return;
-    }
-
-    const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-    if (!projectId) {
-      console.error(
-        "Project ID not found. Please run 'eas build:configure' or add it manually to your app.json."
-      );
-      return;
-    }
-
-    try {
-      token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-      console.log("Expo Push Token:", token);
-    } catch (e) {
-      console.error("Failed to get Expo push token:", e);
-    }
-  } else {
-    console.error("Must use physical device for Push Notifications");
-  }
-
-  return token;
-}
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
+  const [isAuthenticated, setAuthenticated] = useState(false);
 
   useEffect(() => {
-    registerForPushNotificationsAsync().then((token) => {
-      // You can send the token to your backend server here.
-    });
-
-    const notificationListener = Notifications.addNotificationReceivedListener(
-      (notification) => {
-        console.log("Notification received:", notification);
+    async function authenticate() {
+      try {
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        if (hasHardware) {
+          const supportedTypes =
+            await LocalAuthentication.supportedAuthenticationTypesAsync();
+          if (
+            supportedTypes.includes(
+              LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION
+            ) ||
+            supportedTypes.includes(
+              LocalAuthentication.AuthenticationType.FINGERPRINT
+            )
+          ) {
+            const result = await LocalAuthentication.authenticateAsync({
+              promptMessage: "생체 정보를 사용하여 인증해주세요.",
+            });
+            if (result.success) {
+              setAuthenticated(true);
+            } else {
+              setAuthenticated(true); // 인증 실패 시에도 진행 (테스트용)
+            }
+          } else {
+            setAuthenticated(true); // 생체 인증 미지원 시 진행
+          }
+        } else {
+          setAuthenticated(true); // 하드웨어 미지원 시 진행
+        }
+      } catch (e) {
+        console.error(e);
+        setAuthenticated(true); // 오류 발생 시에도 진행
       }
-    );
+    }
 
-    const responseListener =
-      Notifications.addNotificationResponseReceivedListener((response) => {
-        console.log("Notification response received:", response);
-      });
+    if (loaded) {
+      authenticate();
+    }
+  }, [loaded]);
 
-    return () => {
-      Notifications.removeNotificationSubscription(notificationListener);
-      Notifications.removeNotificationSubscription(responseListener);
-    };
-  }, []);
+  const onLayoutRootView = useCallback(async () => {
+    if (loaded && isAuthenticated) {
+      await SplashScreen.hideAsync();
+    }
+  }, [loaded, isAuthenticated]);
 
-  if (!loaded) {
-    // Async font loading only occurs in development.
+  if (!loaded || !isAuthenticated) {
     return null;
   }
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </View>
   );
 }

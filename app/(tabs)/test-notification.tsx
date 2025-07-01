@@ -1,5 +1,7 @@
 import Constants from "expo-constants";
+import * as LocalAuthentication from "expo-local-authentication";
 import * as Notifications from "expo-notifications";
+import * as Updates from "expo-updates";
 import { Alert, Button, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -69,6 +71,35 @@ export default function TabTestNotification() {
     }
   }
 
+  // 생체 인증 테스트
+  async function handleAuthentication() {
+    const hasHardware = await LocalAuthentication.hasHardwareAsync();
+    if (!hasHardware) {
+      Alert.alert("오류", "이 기기에서는 생체 인식을 지원하지 않습니다.");
+      return;
+    }
+
+    const result = await LocalAuthentication.authenticateAsync({
+      promptMessage: "생체 정보를 사용하여 인증해주세요.",
+    });
+
+    if (result.success) {
+      Alert.alert("성공", "생체 인증에 성공했습니다.");
+    } else {
+      Alert.alert(
+        "실패",
+        result.error === "user_cancel"
+          ? "사용자가 인증을 취소했습니다."
+          : "생체 인증에 실패했습니다."
+      );
+    }
+  }
+
+  // 앱 재시작 (스플래시 테스트용)
+  async function reloadApp() {
+    await Updates.reloadAsync();
+  }
+
   return (
     <ThemedView style={styles.container}>
       <ThemedText type="title">알림 테스트</ThemedText>
@@ -87,6 +118,14 @@ export default function TabTestNotification() {
       <ThemedText style={styles.subtitle}>
         (현재 기기로 푸시 알림을 보냅니다)
       </ThemedText>
+
+      <View style={styles.separator} />
+
+      <Button title="생체 인증 테스트" onPress={handleAuthentication} />
+
+      <View style={styles.separator} />
+
+      <Button title="앱 재시작 (스플래시 테스트)" onPress={reloadApp} />
     </ThemedView>
   );
 }
