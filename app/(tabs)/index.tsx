@@ -3,8 +3,11 @@ import * as ImagePicker from "expo-image-picker";
 import { Alert, SafeAreaView, StyleSheet, Vibration, View } from "react-native";
 
 import WebView from "react-native-webview";
+import { useAuth } from "../_layout";
 
 export default function HomeScreen() {
+  const { logout } = useAuth();
+
   async function openCamera() {
     const { status } = await Camera.requestCameraPermissionsAsync();
     if (status !== "granted") {
@@ -47,6 +50,12 @@ export default function HomeScreen() {
           onMessage={async (event) => {
             console.log(event.nativeEvent.data);
             const message = event.nativeEvent.data;
+
+            // 로그아웃 메시지 처리 - Context를 통해 바로 로그인 화면으로 전환
+            if (message === "logout") {
+              await logout();
+            }
+
             if (message === "vibrate") {
               Vibration.vibrate();
             }

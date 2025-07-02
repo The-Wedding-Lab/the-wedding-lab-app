@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   DarkTheme,
   DefaultTheme,
@@ -8,13 +9,71 @@ import * as LocalAuthentication from "expo-local-authentication";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useState } from "react";
-import { View } from "react-native";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { SafeAreaView, StyleSheet, View } from "react-native";
 import "react-native-reanimated";
+import WebView from "react-native-webview";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 
 SplashScreen.preventAutoHideAsync();
+
+// 로그인 상태 관리를 위한 Context
+interface AuthContextType {
+  isLoggedIn: boolean;
+  login: () => Promise<void>;
+  logout: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within AuthProvider");
+  }
+  return context;
+}
+
+function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const login = async () => {
+    await AsyncStorage.setItem("isLoggedIn", "true");
+    setIsLoggedIn(true);
+  };
+
+  const logout = async () => {
+    await AsyncStorage.removeItem("isLoggedIn");
+    setIsLoggedIn(false);
+  };
+
+  // 앱 시작 시 로그인 상태 확인
+  useEffect(() => {
+    async function checkLoginStatus() {
+      try {
+        const loginStatus = await AsyncStorage.getItem("isLoggedIn");
+        setIsLoggedIn(loginStatus === "true");
+      } catch (error) {
+        console.error("로그인 상태 확인 오류:", error);
+        setIsLoggedIn(false);
+      }
+    }
+    checkLoginStatus();
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ isLoggedIn, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -74,6 +133,50 @@ export default function RootLayout() {
   }
 
   return (
+    <AuthProvider>
+      <MainApp onLayoutRootView={onLayoutRootView} colorScheme={colorScheme} />
+    </AuthProvider>
+  );
+}
+
+function MainApp({
+  onLayoutRootView,
+  colorScheme,
+}: {
+  onLayoutRootView: () => void;
+  colorScheme: string | null | undefined;
+}) {
+  const { isLoggedIn, login } = useAuth();
+
+  // 로그인이 안 되어있으면 로그인 화면만 전체화면으로 표시
+  if (!isLoggedIn) {
+    return (
+      <View style={styles.container} onLayout={onLayoutRootView}>
+        <ThemeProvider
+          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+        >
+          <SafeAreaView style={styles.safeArea}>
+            <WebView
+              source={{ uri: "http://192.168.0.4:3003/login" }}
+              onMessage={async (event) => {
+                console.log(event.nativeEvent.data);
+                const message = event.nativeEvent.data;
+
+                // 로그인 성공 메시지 처리
+                if (message === "loginSuccess") {
+                  await login();
+                }
+              }}
+            />
+          </SafeAreaView>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </View>
+    );
+  }
+
+  // 로그인이 되어있으면 기존 탭바 레이아웃 표시
+  return (
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
         <Stack>
@@ -85,3 +188,13 @@ export default function RootLayout() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+  },
+  safeArea: {
+    flex: 1,
+  },
+});

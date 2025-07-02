@@ -6,8 +6,10 @@ import { Alert, Button, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { useAuth } from "../_layout";
 
 export default function TabTestNotification() {
+  const { isLoggedIn, login, logout } = useAuth();
   // 로컬 알림
   async function scheduleLocalNotification() {
     await Notifications.scheduleNotificationAsync({
@@ -100,6 +102,12 @@ export default function TabTestNotification() {
     await Updates.reloadAsync();
   }
 
+  // 로그아웃 테스트 함수
+  async function handleLogout() {
+    await logout();
+    Alert.alert("로그아웃", "로그아웃되었습니다.");
+  }
+
   return (
     <ThemedView style={styles.container}>
       <ThemedText type="title">알림 테스트</ThemedText>
@@ -118,14 +126,12 @@ export default function TabTestNotification() {
       <ThemedText style={styles.subtitle}>
         (현재 기기로 푸시 알림을 보냅니다)
       </ThemedText>
-
       <View style={styles.separator} />
-
       <Button title="생체 인증 테스트" onPress={handleAuthentication} />
-
       <View style={styles.separator} />
-
       <Button title="앱 재시작 (스플래시 테스트)" onPress={reloadApp} />
+      <View style={styles.separator} />
+      <Button title="로그아웃 테스트" onPress={handleLogout} />
     </ThemedView>
   );
 }
