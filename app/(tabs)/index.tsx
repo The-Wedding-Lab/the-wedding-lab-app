@@ -46,7 +46,7 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <WebView
-          source={{ uri: "http://192.168.0.4:3003/ui" }}
+          source={{ uri: "http://1.234.44.179:3004/ui" }}
           onMessage={async (event) => {
             console.log(event.nativeEvent.data);
             const message = event.nativeEvent.data;

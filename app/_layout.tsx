@@ -157,7 +157,7 @@ function MainApp({
         >
           <SafeAreaView style={styles.safeArea}>
             <WebView
-              source={{ uri: "http://192.168.0.4:3003/login" }}
+              source={{ uri: "http://1.234.44.179:3004/login" }}
               onMessage={async (event) => {
                 console.log(event.nativeEvent.data);
                 const message = event.nativeEvent.data;
