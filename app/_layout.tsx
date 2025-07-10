@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   DarkTheme,
   DefaultTheme,
@@ -9,71 +8,15 @@ import * as LocalAuthentication from "expo-local-authentication";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
-import { SafeAreaView, StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { AppState, SafeAreaView, StyleSheet, View } from "react-native";
 import "react-native-reanimated";
 import WebView from "react-native-webview";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { useAuthStore } from "../store/authStore";
 
 SplashScreen.preventAutoHideAsync();
-
-// 로그인 상태 관리를 위한 Context
-interface AuthContextType {
-  isLoggedIn: boolean;
-  login: () => Promise<void>;
-  logout: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | null>(null);
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-  return context;
-}
-
-function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  const login = async () => {
-    await AsyncStorage.setItem("isLoggedIn", "true");
-    setIsLoggedIn(true);
-  };
-
-  const logout = async () => {
-    await AsyncStorage.removeItem("isLoggedIn");
-    setIsLoggedIn(false);
-  };
-
-  // 앱 시작 시 로그인 상태 확인
-  useEffect(() => {
-    async function checkLoginStatus() {
-      try {
-        const loginStatus = await AsyncStorage.getItem("isLoggedIn");
-        setIsLoggedIn(loginStatus === "true");
-      } catch (error) {
-        console.error("로그인 상태 확인 오류:", error);
-        setIsLoggedIn(false);
-      }
-    }
-    checkLoginStatus();
-  }, []);
-
-  return (
-    <AuthContext.Provider value={{ isLoggedIn, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -81,6 +24,7 @@ export default function RootLayout() {
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
   const [isAuthenticated, setAuthenticated] = useState(false);
+  const initializeAuth = useAuthStore((state) => state.initializeAuth);
 
   useEffect(() => {
     async function authenticate() {
@@ -122,6 +66,13 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
+  // 앱 시작 시 인증 상태 초기화
+  useEffect(() => {
+    if (loaded && isAuthenticated) {
+      initializeAuth();
+    }
+  }, [loaded, isAuthenticated, initializeAuth]);
+
   const onLayoutRootView = useCallback(async () => {
     if (loaded && isAuthenticated) {
       await SplashScreen.hideAsync();
@@ -133,9 +84,7 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <MainApp onLayoutRootView={onLayoutRootView} colorScheme={colorScheme} />
-    </AuthProvider>
+    <MainApp onLayoutRootView={onLayoutRootView} colorScheme={colorScheme} />
   );
 }
 
@@ -146,7 +95,23 @@ function MainApp({
   onLayoutRootView: () => void;
   colorScheme: string | null | undefined;
 }) {
-  const { isLoggedIn, login } = useAuth();
+  const { isLoggedIn, login, setToken, setUser, initializeAuth } =
+    useAuthStore();
+
+  // 앱이 포그라운드로 돌아올 때 토큰 유효성 재확인
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: string) => {
+      if (nextAppState === "active") {
+        initializeAuth();
+      }
+    };
+
+    const subscription = AppState.addEventListener(
+      "change",
+      handleAppStateChange
+    );
+    return () => subscription?.remove();
+  }, [initializeAuth]);
 
   // 로그인이 안 되어있으면 로그인 화면만 전체화면으로 표시
   if (!isLoggedIn) {
@@ -157,14 +122,53 @@ function MainApp({
         >
           <SafeAreaView style={styles.safeArea}>
             <WebView
-              source={{ uri: "http://1.234.44.179:3004/login" }}
+              // source={{ uri: "http://1.234.44.179:3004/login" }}
+              source={{ uri: "http://192.168.0.4:3003/login" }}
+              // scrollEnabled={false}
+              // showsVerticalScrollIndicator={false}
+              // showsHorizontalScrollIndicator={false}
+              bounces={false}
+              overScrollMode="never"
+              // iOS 키보드 설정
+              keyboardDisplayRequiresUserAction={false} // 프로그래매틱 키보드 열기 허용
+              hideKeyboardAccessoryView={false}
+              automaticallyAdjustContentInsets={false}
+              contentInsetAdjustmentBehavior="never"
+              // Android 키보드 설정
+              androidLayerType="hardware"
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+              scrollEnabled={true}
               onMessage={async (event) => {
                 console.log(event.nativeEvent.data);
-                const message = event.nativeEvent.data;
+                try {
+                  const data = JSON.parse(event.nativeEvent.data);
 
-                // 로그인 성공 메시지 처리
-                if (message === "loginSuccess") {
-                  await login();
+                  // 토큰 설정
+                  if (data.type === "SET_TOKEN" && data.token) {
+                    setToken(data.token);
+                  }
+
+                  // 사용자 정보 설정
+                  if (data.type === "SET_USER" && data.user) {
+                    setUser(data.user);
+                  }
+
+                  // 로그인 성공 처리
+                  if (
+                    data.type === "LOGIN_SUCCESS" &&
+                    data.token &&
+                    data.user
+                  ) {
+                    login(data.token, data.user);
+                  }
+                } catch (error) {
+                  // JSON 파싱 실패 시 기존 문자열 처리
+                  const message = event.nativeEvent.data;
+                  if (message === "loginSuccess") {
+                    // 기본 로그인 처리 (토큰과 사용자 정보가 없는 경우)
+                    console.log("기본 로그인 성공");
+                  }
                 }
               }}
             />

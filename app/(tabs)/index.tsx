@@ -1,12 +1,14 @@
 import { Camera } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
+import { useRef } from "react";
 import { Alert, SafeAreaView, StyleSheet, Vibration, View } from "react-native";
 
 import WebView from "react-native-webview";
-import { useAuth } from "../_layout";
+import { useAuthStore } from "../../store/authStore";
 
 export default function HomeScreen() {
-  const { logout } = useAuth();
+  const { logout, token, user, setToken, setUser, login } = useAuthStore();
+  const webViewRef = useRef<WebView>(null);
 
   async function openCamera() {
     const { status } = await Camera.requestCameraPermissionsAsync();
@@ -46,30 +48,84 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <WebView
-          source={{ uri: "http://1.234.44.179:3004/ui" }}
+          ref={webViewRef}
+          // source={{ uri: "http://1.234.44.179:3004/" }}
+          source={{ uri: "http://192.168.0.4:3003/" }}
           onMessage={async (event) => {
             console.log(event.nativeEvent.data);
-            const message = event.nativeEvent.data;
 
-            // 로그아웃 메시지 처리 - Context를 통해 바로 로그인 화면으로 전환
-            if (message === "logout") {
-              await logout();
-            }
+            try {
+              // JSON 파싱 시도
+              const data = JSON.parse(event.nativeEvent.data);
 
-            if (message === "vibrate") {
-              Vibration.vibrate();
-            }
-            if (message === "openCamera") {
-              const { status } = await Camera.requestCameraPermissionsAsync();
-              if (status !== "granted") {
-                Alert.alert("권한 필요", "카메라 사용 권한이 필요합니다.");
-                return;
-              } else {
-                openCamera();
+              switch (data.type) {
+                case "SET_TOKEN":
+                  if (data.token) {
+                    setToken(data.token);
+                  }
+                  break;
+
+                case "SET_USER":
+                  if (data.user) {
+                    setUser(data.user);
+                  }
+                  break;
+
+                case "LOGIN_SUCCESS":
+                  if (data.token && data.user) {
+                    login(data.token, data.user);
+                  }
+                  break;
+
+                case "GET_TOKEN":
+                  webViewRef.current?.postMessage(
+                    JSON.stringify({
+                      type: "TOKEN_RESPONSE",
+                      token: token,
+                    })
+                  );
+                  break;
+
+                case "GET_USER":
+                  webViewRef.current?.postMessage(
+                    JSON.stringify({
+                      type: "USER_RESPONSE",
+                      user: user,
+                    })
+                  );
+                  break;
+
+                case "CLEAR_AUTH":
+                  await logout();
+                  break;
+
+                default:
+                  console.log("알 수 없는 메시지 타입:", data.type);
               }
-            }
-            if (message === "openGallery") {
-              openGallery();
+            } catch (error) {
+              // JSON 파싱 실패 시 기존 문자열 메시지 처리
+              const message = event.nativeEvent.data;
+
+              // 로그아웃 메시지 처리
+              if (message === "logout") {
+                await logout();
+              }
+
+              if (message === "vibrate") {
+                Vibration.vibrate();
+              }
+              if (message === "openCamera") {
+                const { status } = await Camera.requestCameraPermissionsAsync();
+                if (status !== "granted") {
+                  Alert.alert("권한 필요", "카메라 사용 권한이 필요합니다.");
+                  return;
+                } else {
+                  openCamera();
+                }
+              }
+              if (message === "openGallery") {
+                openGallery();
+              }
             }
           }}
         />

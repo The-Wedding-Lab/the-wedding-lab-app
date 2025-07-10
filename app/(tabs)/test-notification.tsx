@@ -6,10 +6,10 @@ import { Alert, Button, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { useAuth } from "../_layout";
+import { useAuthStore } from "../../store/authStore";
 
 export default function TabTestNotification() {
-  const { isLoggedIn, login, logout } = useAuth();
+  const { logout } = useAuthStore();
   // 로컬 알림
   async function scheduleLocalNotification() {
     await Notifications.scheduleNotificationAsync({

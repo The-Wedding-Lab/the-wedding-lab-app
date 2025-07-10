@@ -1,0 +1,80 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+import { isTokenExpired } from "../utils/auth";
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+}
+
+interface AuthState {
+  token: string | null;
+  user: User | null;
+  isLoggedIn: boolean;
+  setToken: (token: string) => void;
+  setUser: (user: User) => void;
+  login: (token: string, user: User) => void;
+  logout: () => Promise<void>;
+  initializeAuth: () => Promise<void>;
+}
+
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      token: null,
+      user: null,
+      isLoggedIn: false,
+
+      setToken: (token: string) => {
+        set({ token, isLoggedIn: true });
+      },
+
+      setUser: (user: User) => {
+        set({ user });
+      },
+
+      login: (token: string, user: User) => {
+        set({ token, user, isLoggedIn: true });
+      },
+
+      logout: async () => {
+        try {
+          await AsyncStorage.multiRemove(["auth-storage"]);
+          set({ token: null, user: null, isLoggedIn: false });
+        } catch (error) {
+          console.error("로그아웃 오류:", error);
+        }
+      },
+
+      initializeAuth: async () => {
+        try {
+          const { token, user } = get();
+
+          // 토큰이 있으면 유효성 검사
+          if (token && user) {
+            if (isTokenExpired(token)) {
+              // 토큰이 만료되었으면 로그아웃
+              console.log("토큰이 만료되어 로그아웃합니다.");
+              await get().logout();
+            } else {
+              // 토큰이 유효하면 로그인 상태로 설정
+              set({ isLoggedIn: true });
+            }
+          } else {
+            // 토큰이나 사용자 정보가 없으면 로그아웃 상태
+            set({ isLoggedIn: false });
+          }
+        } catch (error) {
+          console.error("인증 초기화 오류:", error);
+          set({ token: null, user: null, isLoggedIn: false });
+        }
+      },
+    }),
+    {
+      name: "auth-storage",
+      storage: createJSONStorage(() => AsyncStorage),
+    }
+  )
+);
