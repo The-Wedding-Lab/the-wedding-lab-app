@@ -1,7 +1,14 @@
 import { Camera } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { useRef } from "react";
-import { Alert, SafeAreaView, StyleSheet, Vibration, View } from "react-native";
+import {
+  Alert,
+  Linking,
+  SafeAreaView,
+  StyleSheet,
+  Vibration,
+  View,
+} from "react-native";
 
 import WebView from "react-native-webview";
 import { useAuthStore } from "../../store/authStore";
@@ -51,6 +58,27 @@ export default function HomeScreen() {
           ref={webViewRef}
           // source={{ uri: "http://1.234.44.179:3004/" }}
           source={{ uri: "http://192.168.0.4:3003/" }}
+          onShouldStartLoadWithRequest={(request) => {
+            const externalDomains = [
+              "map.naver.com",
+              "maps.google.com",
+              "www.google.com/maps",
+              "tmap://",
+              "kakaotalk://",
+              "kakaomap://",
+            ];
+
+            const isExternalLink = externalDomains.some((domain) =>
+              request.url.includes(domain)
+            );
+
+            if (isExternalLink) {
+              Linking.openURL(request.url);
+              return false;
+            }
+
+            return true;
+          }}
           onMessage={async (event) => {
             console.log(event.nativeEvent.data);
 
@@ -103,7 +131,7 @@ export default function HomeScreen() {
                   console.log("알 수 없는 메시지 타입:", data.type);
               }
             } catch (error) {
-              // JSON 파싱 실패 시 기존 문자열 메시지 처리
+              // JSON 파싱 실패 시 기존 문자열 메시지 처리-
               const message = event.nativeEvent.data;
 
               // 로그아웃 메시지 처리
@@ -141,5 +169,6 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    paddingBottom: 80, // 탭바 높이만큼 패딩 추가
   },
 });

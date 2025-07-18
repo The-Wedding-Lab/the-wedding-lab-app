@@ -23,7 +23,7 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
-  const [isAuthenticated, setAuthenticated] = useState(false);
+  const [isAuthenticated, setAuthenticated] = useState(true);
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
 
   useEffect(() => {
@@ -62,7 +62,7 @@ export default function RootLayout() {
     }
 
     if (loaded) {
-      authenticate();
+      // authenticate();
     }
   }, [loaded]);
 
@@ -102,6 +102,7 @@ function MainApp({
   useEffect(() => {
     const handleAppStateChange = (nextAppState: string) => {
       if (nextAppState === "active") {
+        console.log("로그인 확인");
         initializeAuth();
       }
     };

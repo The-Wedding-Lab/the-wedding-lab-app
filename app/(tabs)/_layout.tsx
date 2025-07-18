@@ -18,8 +18,12 @@ export default function TabLayout() {
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
         tabBarStyle: {
-          position: "absolute",
+          position: "relative",
           borderTopWidth: 0,
+          backgroundColor: colorScheme === "dark" ? "#000" : "#fff",
+          paddingBottom: 10,
+          paddingTop: 10,
+          height: 80,
         },
         tabBarShowLabel: false,
       }}
@@ -47,7 +51,7 @@ export default function TabLayout() {
         options={{
           title: "알림 테스트",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="bell.fill" color={color} />
+            <IconSymbol size={28} name="0.circle" color={color} />
           ),
         }}
       />

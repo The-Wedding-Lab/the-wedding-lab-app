@@ -19,5 +19,6 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    paddingBottom: 80, // 탭바 높이만큼 패딩 추가
   },
 });
