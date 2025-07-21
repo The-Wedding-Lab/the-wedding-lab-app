@@ -18,6 +18,7 @@ interface AuthState {
   login: (token: string, user: User) => void;
   logout: () => Promise<void>;
   initializeAuth: () => Promise<void>;
+  updateNativeToken: (nativeToken: string) => Promise<boolean>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -69,6 +70,44 @@ export const useAuthStore = create<AuthState>()(
         } catch (error) {
           console.error("인증 초기화 오류:", error);
           set({ token: null, user: null, isLoggedIn: false });
+        }
+      },
+
+      updateNativeToken: async (nativeToken: string) => {
+        try {
+          const { user } = get();
+
+          if (!user) {
+            console.error("사용자 정보가 없습니다.");
+            return false;
+          }
+
+          // DB에 네이티브 토큰 업데이트 API 호출
+          const response = await fetch(
+            "http://192.168.0.4:3003/api/users/native-token",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${get().token}`,
+              },
+              body: JSON.stringify({
+                userId: user.id,
+                nativeToken: nativeToken,
+              }),
+            }
+          );
+
+          if (response.ok) {
+            console.log("네이티브 토큰 DB 업데이트 성공");
+            return true;
+          } else {
+            console.error("네이티브 토큰 DB 업데이트 실패:", response.status);
+            return false;
+          }
+        } catch (error) {
+          console.error("네이티브 토큰 업데이트 오류:", error);
+          return false;
         }
       },
     }),

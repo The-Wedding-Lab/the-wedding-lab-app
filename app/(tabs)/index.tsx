@@ -57,7 +57,7 @@ export default function HomeScreen() {
         <WebView
           ref={webViewRef}
           // source={{ uri: "http://1.234.44.179:3004/" }}
-          source={{ uri: "http://192.168.0.4:3003/" }}
+          source={{ uri: "http://192.168.0.4:3003/onboarding" }}
           onShouldStartLoadWithRequest={(request) => {
             const externalDomains = [
               "map.naver.com",
@@ -66,6 +66,9 @@ export default function HomeScreen() {
               "tmap://",
               "kakaotalk://",
               "kakaomap://",
+              "http://192.168.0.4:3003/card",
+              "http://1.234.44.179:3004/card",
+              "http://1.234.44.179:3003/card",
             ];
 
             const isExternalLink = externalDomains.some((domain) =>

@@ -14,6 +14,8 @@ import "react-native-reanimated";
 import WebView from "react-native-webview";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
+import Constants from "expo-constants";
+import * as Notifications from "expo-notifications";
 import { useAuthStore } from "../store/authStore";
 
 SplashScreen.preventAutoHideAsync();
@@ -95,14 +97,20 @@ function MainApp({
   onLayoutRootView: () => void;
   colorScheme: string | null | undefined;
 }) {
-  const { isLoggedIn, login, setToken, setUser, initializeAuth } =
-    useAuthStore();
+  const {
+    isLoggedIn,
+    login,
+    setToken,
+    setUser,
+    initializeAuth,
+    updateNativeToken,
+  } = useAuthStore();
 
   // 앱이 포그라운드로 돌아올 때 토큰 유효성 재확인
   useEffect(() => {
-    const handleAppStateChange = (nextAppState: string) => {
+    const handleAppStateChange = async (nextAppState: string) => {
       if (nextAppState === "active") {
-        console.log("로그인 확인");
+        console.log("토큰 유효성 확인");
         initializeAuth();
       }
     };
@@ -147,11 +155,13 @@ function MainApp({
 
                   // 토큰 설정
                   if (data.type === "SET_TOKEN" && data.token) {
+                    console.log("토큰 설정", data.token);
                     setToken(data.token);
                   }
 
                   // 사용자 정보 설정
                   if (data.type === "SET_USER" && data.user) {
+                    console.log("사용자 정보 설정", data.user);
                     setUser(data.user);
                   }
 
@@ -169,6 +179,13 @@ function MainApp({
                   if (message === "loginSuccess") {
                     // 기본 로그인 처리 (토큰과 사용자 정보가 없는 경우)
                     console.log("기본 로그인 성공");
+                    const projectId =
+                      Constants.expoConfig?.extra?.eas?.projectId;
+                    const token = (
+                      await Notifications.getExpoPushTokenAsync({ projectId })
+                    ).data;
+                    console.log("토큰", token);
+                    updateNativeToken(token);
                   }
                 }
               }}

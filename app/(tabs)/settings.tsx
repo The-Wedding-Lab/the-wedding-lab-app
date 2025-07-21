@@ -8,8 +8,16 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useAuthStore } from "../../store/authStore";
 
-export default function TabTestNotification() {
-  const { logout } = useAuthStore();
+export default function SettingsScreen() {
+  const { logout, updateNativeToken } = useAuthStore();
+
+  // 네이티브 토큰 생성 함수
+  function generateNativeToken() {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substr(2, 9);
+    return `native_${timestamp}_${random}`;
+  }
+
   // 로컬 알림
   async function scheduleLocalNotification() {
     await Notifications.scheduleNotificationAsync({
@@ -86,7 +94,26 @@ export default function TabTestNotification() {
     });
 
     if (result.success) {
-      Alert.alert("성공", "생체 인증에 성공했습니다.");
+      // 생체 인증 성공 시 네이티브 토큰 생성 및 DB 업데이트
+      const nativeToken = generateNativeToken();
+      console.log("생성된 네이티브 토큰:", nativeToken);
+
+      try {
+        const success = await updateNativeToken(nativeToken);
+        if (success) {
+          Alert.alert(
+            "성공",
+            `생체 인증 성공!\n네이티브 토큰이 DB에 업데이트되었습니다.\n토큰: ${nativeToken}`
+          );
+        } else {
+          Alert.alert(
+            "경고",
+            "생체 인증은 성공했지만 토큰 업데이트에 실패했습니다."
+          );
+        }
+      } catch (error) {
+        Alert.alert("오류", `토큰 업데이트 중 오류 발생: ${error}`);
+      }
     } else {
       Alert.alert(
         "실패",
