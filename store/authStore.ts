@@ -84,7 +84,7 @@ export const useAuthStore = create<AuthState>()(
 
           // DB에 네이티브 토큰 업데이트 API 호출
           const response = await fetch(
-            "http://192.168.0.4:3003/api/users/native-token",
+            "http://1.234.44.179:3004/api/users/native-token",
             {
               method: "POST",
               headers: {
