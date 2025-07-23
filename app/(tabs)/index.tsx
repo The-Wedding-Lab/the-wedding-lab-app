@@ -21,7 +21,7 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.safeArea}>
         <WebViewComponent
           // uri={`http://192.168.0.4:3003/onboarding`}
-          uri={`http://1.234.44.179:3004/onboarding`}
+          uri={`http://1.234.44.179/onboarding`}
           onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
         />
       </SafeAreaView>

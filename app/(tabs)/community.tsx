@@ -5,7 +5,7 @@ export default function CommunityScreen() {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <WebViewComponent uri={`http://1.234.44.179:3004/community`} />
+        <WebViewComponent uri={`http://1.234.44.179/community`} />
       </SafeAreaView>
     </View>
   );

@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "the-wedding-lab-app",
-    "slug": "the-wedding-lab-app",
+    "name": "모청 :: 모두의 청첩장",
+    "slug": "모청 :: 모두의 청첩장",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "theweddinglabapp",
+    "icon": "./assets/images/test.png",
+    "scheme": "mocheong",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -13,16 +13,16 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/test.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.tkman.theweddinglabapp"
+      "package": "com.tkman.mocheong"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/test.png"
     },
     "plugins": [
       "expo-router",

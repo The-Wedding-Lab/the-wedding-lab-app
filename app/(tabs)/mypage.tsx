@@ -5,8 +5,8 @@ export default function MyPageScreen() {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        {/* <WebViewComponent uri={`http://192.168.0.4:3003/mypage`} /> */}
-        <WebViewComponent uri={`http://1.234.44.179:3004/mypage`} />
+        {/* <WebViewComponent uri={`http://192.168.0.4:3003/result/45`} /> */}
+        <WebViewComponent uri={`http://1.234.44.179/mypage`} />
       </SafeAreaView>
     </View>
   );

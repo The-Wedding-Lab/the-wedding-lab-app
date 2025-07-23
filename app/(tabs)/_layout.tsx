@@ -4,7 +4,6 @@ import React from "react";
 
 import { HapticTab } from "@/components/HapticTab";
 import TabBarBackground from "@/components/ui/TabBarBackground";
-import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
 export default function TabLayout() {
@@ -13,7 +12,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+        tabBarActiveTintColor: "black",
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
@@ -25,7 +24,7 @@ export default function TabLayout() {
           paddingTop: 10,
           height: 80,
         },
-        tabBarShowLabel: false,
+        tabBarShowLabel: true,
       }}
     >
       <Tabs.Screen
@@ -42,7 +41,7 @@ export default function TabLayout() {
         options={{
           title: "Community",
           tabBarIcon: ({ color }) => (
-            <MaterialIcons name="leaderboard" size={28} color={color} />
+            <MaterialIcons name="cloud" size={28} color={color} />
           ),
         }}
       />
@@ -52,15 +51,6 @@ export default function TabLayout() {
           title: "MyPage",
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="person" size={28} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: "Settings",
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons name="settings" size={28} color={color} />
           ),
         }}
       />
