@@ -30,7 +30,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: "홈",
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="home" size={28} color={color} />
           ),
@@ -39,7 +39,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="community"
         options={{
-          title: "Community",
+          title: "커뮤니티",
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="cloud" size={28} color={color} />
           ),
@@ -48,7 +48,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="mypage"
         options={{
-          title: "MyPage",
+          title: "마이페이지",
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="person" size={28} color={color} />
           ),

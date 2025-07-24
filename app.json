@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "모청 :: 모두의 청첩장",
-    "slug": "모청 :: 모두의 청첩장",
+    "name": "모두의 청첩장",
+    "slug": "모두의 청첩장",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/test.png",
+    "icon": "./assets/images/modu.png",
     "scheme": "mocheong",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,7 +13,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/test.png",
+        "foregroundImage": "./assets/images/modu.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -22,14 +22,14 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/test.png"
+      "favicon": "./assets/images/modu.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/test.png",
+          "image": "./assets/images/modu.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#000000"
