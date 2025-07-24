@@ -1,6 +1,8 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
+import { Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { HapticTab } from "@/components/HapticTab";
 import TabBarBackground from "@/components/ui/TabBarBackground";
@@ -8,6 +10,31 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const insets = useSafeAreaInsets();
+
+  // 안드로이드에서 하단 네비게이션 바 고려
+  const getTabBarStyle = () => {
+    const baseStyle = {
+      position: "relative" as const,
+      borderTopWidth: 0,
+      backgroundColor: colorScheme === "dark" ? "#000" : "#fff",
+      paddingTop: 10,
+    };
+
+    if (Platform.OS === "android") {
+      return {
+        ...baseStyle,
+        paddingBottom: Math.max(insets.bottom, 10), // 안드로이드 하단 네비게이션 바 고려
+        height: 70 + Math.max(insets.bottom, 10), // 동적 높이 조정
+      };
+    } else {
+      return {
+        ...baseStyle,
+        paddingBottom: 10,
+        height: 80,
+      };
+    }
+  };
 
   return (
     <Tabs
@@ -16,14 +43,7 @@ export default function TabLayout() {
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
-        tabBarStyle: {
-          position: "relative",
-          borderTopWidth: 0,
-          backgroundColor: colorScheme === "dark" ? "#000" : "#fff",
-          paddingBottom: 10,
-          paddingTop: 10,
-          height: 80,
-        },
+        tabBarStyle: getTabBarStyle(),
         tabBarShowLabel: true,
       }}
     >

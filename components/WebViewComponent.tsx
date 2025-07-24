@@ -17,8 +17,14 @@ export default function WebViewComponent({
   onShouldStartLoadWithRequest,
   style,
 }: WebViewComponentProps) {
-  const { logout, token, user, setToken, setUser, login } = useAuthStore();
+  const { logout, token, user, setToken, setUser, login, isLoggedIn } = useAuthStore();
   const webViewRef = useRef<WebView>(null);
+
+  // 컴포넌트 로드 시 현재 인증 상태 로그
+  console.log("WebViewComponent 로드됨");
+  console.log("현재 로그인 상태:", isLoggedIn);
+  console.log("현재 토큰:", token ? "있음" : "없음");
+  console.log("현재 사용자:", user);
 
   async function openCamera() {
     const { status } = await Camera.requestCameraPermissionsAsync();
@@ -91,6 +97,8 @@ export default function WebViewComponent({
           console.log('자동 사용자 정보 저장 완료');
           true;
         `);
+      } else {
+        console.log("WebView 로드 시 사용자 정보가 없음:", user);
       }
     }, WEBVIEW_CONFIG.TIMEOUTS.AUTO_SAVE_DELAY);
   };
@@ -167,23 +175,43 @@ export default function WebViewComponent({
           break;
 
         case WEBVIEW_CONFIG.MESSAGE_TYPES.GET_USER:
-          console.log("사용자 정보 전송:", user);
-          // localStorage에 직접 저장 (더 안전한 방식)
-          const userString = JSON.stringify(user || {});
-          webViewRef.current?.injectJavaScript(`
-            try {
-              localStorage.setItem('${
-                WEBVIEW_CONFIG.STORAGE_KEYS.USER
-              }', '${userString.replace(/'/g, "\\'")}');
-              console.log('사용자 정보가 localStorage에 저장됨:', '${userString.replace(
-                /'/g,
-                "\\'"
-              )}');
-            } catch (e) {
-              console.error('사용자 정보 저장 실패:', e);
-            }
-            true;
-          `);
+          console.log("GET_USER 요청 받음");
+          console.log("현재 user 상태:", user);
+          console.log("user가 null인가?", user === null);
+          console.log("user가 undefined인가?", user === undefined);
+          console.log("user 타입:", typeof user);
+          
+          if (user) {
+            console.log("사용자 정보 전송:", user);
+            // localStorage에 직접 저장 (더 안전한 방식)
+            const userString = JSON.stringify(user);
+            webViewRef.current?.injectJavaScript(`
+              try {
+                localStorage.setItem('${
+                  WEBVIEW_CONFIG.STORAGE_KEYS.USER
+                }', '${userString.replace(/'/g, "\\'")}');
+                console.log('사용자 정보가 localStorage에 저장됨:', '${userString.replace(
+                  /'/g,
+                  "\\'"
+                )}');
+              } catch (e) {
+                console.error('사용자 정보 저장 실패:', e);
+              }
+              true;
+            `);
+          } else {
+            console.log("사용자 정보가 없음 - null 또는 undefined");
+            // 빈 객체라도 저장해서 웹에서 처리할 수 있도록 함
+            webViewRef.current?.injectJavaScript(`
+              try {
+                localStorage.setItem('${WEBVIEW_CONFIG.STORAGE_KEYS.USER}', '{}');
+                console.log('빈 사용자 정보가 localStorage에 저장됨');
+              } catch (e) {
+                console.error('빈 사용자 정보 저장 실패:', e);
+              }
+              true;
+            `);
+          }
           break;
 
         case WEBVIEW_CONFIG.MESSAGE_TYPES.CLEAR_AUTH:

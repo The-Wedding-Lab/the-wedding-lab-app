@@ -9,7 +9,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useState } from "react";
-import { AppState, SafeAreaView, StyleSheet, View } from "react-native";
+import { AppState, Platform, SafeAreaView, StyleSheet, View } from "react-native";
 import "react-native-reanimated";
 import WebView from "react-native-webview";
 
@@ -148,43 +148,80 @@ function MainApp({
               javaScriptEnabled={true}
               domStorageEnabled={true}
               scrollEnabled={true}
+              // Android WebView 메시지 통신을 위한 추가 설정
+              allowFileAccess={true}
+              allowUniversalAccessFromFileURLs={true}
+              allowFileAccessFromFileURLs={true}
+              mixedContentMode="compatibility"
+              // Android에서 메시지 통신을 위한 추가 설정
+              originWhitelist={['*']}
+              allowsInlineMediaPlayback={true}
+              mediaPlaybackRequiresUserAction={false}
+              // 디버깅을 위한 추가 설정
+              onLoadStart={() => console.log('WebView 로딩 시작')}
+              onLoadEnd={() => console.log('WebView 로딩 완료')}
+              onLoadProgress={({ nativeEvent }) => {
+                console.log('WebView 로딩 진행률:', nativeEvent.progress);
+              }}
               onMessage={async (event) => {
-                console.log(event.nativeEvent.data);
+                console.log("=== WebView 메시지 수신 ===");
+                console.log("원본 데이터:", event.nativeEvent.data);
+                console.log("메시지 타입:", typeof event.nativeEvent.data);
+                console.log("플랫폼:", Platform.OS);
+                console.log("현재 시간:", new Date().toISOString());
+                
                 try {
                   const data = JSON.parse(event.nativeEvent.data);
+                  console.log("파싱된 데이터:", data);
+                  console.log("메시지 타입:", data.type);
 
                   // 토큰 설정
                   if (data.type === "SET_TOKEN" && data.token) {
-                    console.log("토큰 설정", data.token);
+                    console.log("✅ SET_TOKEN 처리:", data.token);
                     setToken(data.token);
                   }
 
                   // 사용자 정보 설정
                   if (data.type === "SET_USER" && data.user) {
-                    console.log("사용자 정보 설정", data.user);
+                    console.log("✅ SET_USER 처리:", data.user);
                     setUser(data.user);
                   }
 
                   // 로그인 성공 처리
-                  if (
-                    data.type === "LOGIN_SUCCESS" &&
-                    data.token &&
-                    data.user
-                  ) {
-                    login(data.token, data.user);
-                    const projectId =
-                      Constants.expoConfig?.extra?.eas?.projectId;
-                    const token = (
-                      await Notifications.getExpoPushTokenAsync({ projectId })
-                    ).data;
-                    console.log("토큰", token);
-                    updateNativeToken(token);
+                  if (data.type === "LOGIN_SUCCESS") {
+                    console.log("✅ LOGIN_SUCCESS 수신");
+                    console.log("토큰:", data.token ? "있음" : "없음");
+                    console.log("사용자:", data.user ? "있음" : "없음");
+                    
+                    if (data.token && data.user) {
+                      console.log("로그인 성공 처리 시작");
+                      login(data.token, data.user);
+                      const projectId =
+                        Constants.expoConfig?.extra?.eas?.projectId;
+                      const pushToken = (
+                        await Notifications.getExpoPushTokenAsync({ projectId })
+                      ).data;
+                      console.log("푸시 토큰", pushToken);
+                      updateNativeToken(pushToken);
+                    } else {
+                      console.log("❌ LOGIN_SUCCESS에 토큰 또는 사용자 정보 누락");
+                    }
                   }
                 } catch (error) {
                   // JSON 파싱 실패 시 기존 문자열 처리
                   const message = event.nativeEvent.data;
-                  console.log("message", message);
+                  console.log("JSON 파싱 실패, 원본 메시지:", message);
+                  console.log("에러:", error);
                 }
+                console.log("=== 메시지 처리 완료 ===\n");
+              }}
+              onError={(syntheticEvent) => {
+                const { nativeEvent } = syntheticEvent;
+                console.warn('WebView error: ', nativeEvent);
+              }}
+              onHttpError={(syntheticEvent) => {
+                const { nativeEvent } = syntheticEvent;
+                console.warn('WebView HTTP error: ', nativeEvent);
               }}
             />
           </SafeAreaView>
