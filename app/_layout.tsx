@@ -18,7 +18,51 @@ import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 import { useAuthStore } from "../store/authStore";
 
+// 알림 설정
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
 SplashScreen.preventAutoHideAsync();
+
+async function requestNotificationPermission() {
+  try {
+    // 안드로이드 알림 채널 설정
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: '기본 알림',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
+      });
+    }
+
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    
+    if (finalStatus !== 'granted') {
+      console.log('알림 권한이 거부되었습니다.');
+      return false;
+    }
+    
+    console.log('알림 권한이 허용되었습니다.');
+    return true;
+  } catch (error) {
+    console.error('알림 권한 요청 중 오류:', error);
+    return false;
+  }
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -26,6 +70,7 @@ export default function RootLayout() {
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
   const [isAuthenticated, setAuthenticated] = useState(true);
+  const [notificationPermissionRequested, setNotificationPermissionRequested] = useState(false);
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
 
   useEffect(() => {
@@ -74,6 +119,19 @@ export default function RootLayout() {
       initializeAuth();
     }
   }, [loaded, isAuthenticated, initializeAuth]);
+
+  // 앱 시작 시 알림 권한 요청
+  useEffect(() => {
+    if (loaded && isAuthenticated && !notificationPermissionRequested) {
+      const requestPermission = async () => {
+        await requestNotificationPermission();
+        setNotificationPermissionRequested(true);
+      };
+      
+      // 약간의 지연 후 권한 요청 (사용자 경험 개선)
+      setTimeout(requestPermission, 1000);
+    }
+  }, [loaded, isAuthenticated, notificationPermissionRequested]);
 
   const onLayoutRootView = useCallback(async () => {
     if (loaded && isAuthenticated) {
