@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "모두의 청첩장",
-    "slug": "모두의 청첩장",
+    "slug": "the-wedding-lab-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/modu.png",
@@ -12,10 +12,6 @@
       "supportsTablet": true
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/modu.png",
-        "backgroundColor": "#ffffff"
-      },
       "edgeToEdgeEnabled": true,
       "package": "com.tkman.mocheong"
     },
