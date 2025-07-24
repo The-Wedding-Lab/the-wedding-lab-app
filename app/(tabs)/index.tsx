@@ -1,72 +1,41 @@
-import { Camera } from "expo-camera";
-import * as ImagePicker from "expo-image-picker";
-import { Alert, SafeAreaView, Vibration } from "react-native";
-
-import WebView from "react-native-webview";
+import { Linking, SafeAreaView, StyleSheet, View } from "react-native";
+import WebViewComponent from "../../components/WebViewComponent";
+import { WEBVIEW_CONFIG } from "../../config/webview.config";
 
 export default function HomeScreen() {
-  async function openCamera() {
-    const { status } = await Camera.requestCameraPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("권한 필요", "카메라 사용 권한이 필요합니다.");
-      return;
+  // 홈 화면 전용 외부 링크 처리
+  const handleShouldStartLoadWithRequest = (request: any) => {
+    const isExternalLink = WEBVIEW_CONFIG.EXTERNAL_DOMAINS.some((domain) =>
+      request.url.includes(domain)
+    );
+
+    if (isExternalLink) {
+      Linking.openURL(request.url);
+      return false;
     }
-
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: false,
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    });
-
-    if (!result.canceled) {
-      console.log("📷 사진 URI:", result.assets[0].uri);
-    }
-  }
-
-  async function openGallery() {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("권한 필요", "앨범 접근 권한이 필요합니다.");
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: false,
-    });
-
-    if (!result.canceled) {
-      console.log("📸 선택된 사진 URI:", result.assets[0].uri);
-    }
-  }
+    return true;
+  };
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-      }}
-    >
-      <WebView
-        source={{ uri: "http://192.168.0.4:3003/ui" }}
-        onMessage={async (event) => {
-          console.log(event.nativeEvent.data);
-          const message = event.nativeEvent.data;
-          if (message === "vibrate") {
-            Vibration.vibrate();
-          }
-          if (message === "openCamera") {
-            const { status } = await Camera.requestCameraPermissionsAsync();
-            if (status !== "granted") {
-              Alert.alert("권한 필요", "카메라 사용 권한이 필요합니다.");
-              return;
-            } else {
-              openCamera();
-            }
-          }
-          if (message === "openGallery") {
-            openGallery();
-          }
-        }}
-      />
-    </SafeAreaView>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <WebViewComponent
+          // uri={`http://192.168.0.4:3003/onboarding`}
+          uri={`http://1.234.44.179/onboarding`}
+          onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
+        />
+      </SafeAreaView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+  },
+  safeArea: {
+    flex: 1,
+    paddingBottom: 80, // 탭바 높이만큼 패딩 추가
+  },
+});
