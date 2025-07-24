@@ -131,7 +131,7 @@ function MainApp({
         >
           <SafeAreaView style={styles.safeArea}>
             <WebView
-              source={{ uri: "http://1.234.44.179:3004/login" }}
+              source={{ uri: "http://1.234.44.179/login" }}
               // source={{ uri: "http://192.168.0.4:3003/login" }}
               // scrollEnabled={false}
               // showsVerticalScrollIndicator={false}
@@ -172,13 +172,6 @@ function MainApp({
                     data.user
                   ) {
                     login(data.token, data.user);
-                  }
-                } catch (error) {
-                  // JSON 파싱 실패 시 기존 문자열 처리
-                  const message = event.nativeEvent.data;
-                  if (message === "loginSuccess") {
-                    // 기본 로그인 처리 (토큰과 사용자 정보가 없는 경우)
-                    console.log("기본 로그인 성공");
                     const projectId =
                       Constants.expoConfig?.extra?.eas?.projectId;
                     const token = (
@@ -187,6 +180,10 @@ function MainApp({
                     console.log("토큰", token);
                     updateNativeToken(token);
                   }
+                } catch (error) {
+                  // JSON 파싱 실패 시 기존 문자열 처리
+                  const message = event.nativeEvent.data;
+                  console.log("message", message);
                 }
               }}
             />

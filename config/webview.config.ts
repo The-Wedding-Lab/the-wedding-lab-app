@@ -1,8 +1,8 @@
 export const WEBVIEW_CONFIG = {
   // 기본 서버 주소
-  BASE_URL: "http://192.168.0.4:3003",
+  BASE_URL: "http://1.234.44.179",
   // 운영 서버 주소 (필요시 변경)
-  PRODUCTION_URL: "http://1.234.44.179:3004",
+  PRODUCTION_URL: "http://1.234.44.179",
 
   // 웹뷰 공통 설정
   WEBVIEW_PROPS: {
@@ -20,9 +20,7 @@ export const WEBVIEW_CONFIG = {
     "tmap://",
     "kakaotalk://",
     "kakaomap://",
-    "http://192.168.0.4:3003/card",
-    "http://1.234.44.179:3004/card",
-    "http://1.234.44.179:3003/card",
+    "http://1.234.44.179/card",
   ],
 
   // 페이지별 경로
